@@ -1,6 +1,38 @@
 @RestfulAPI_HostAddress = http://localhost:5170
 
-GET {{RestfulAPI_HostAddress}}/weatherforecast/
+GET {{RestfulAPI_HostAddress}}/api/todoitems
 Accept: application/json
+
+###
+
+POST {{RestfulAPI_HostAddress}}/api/todoitems
+Content-Type: application/json
+
+{
+  "name": "walk xristofis",
+  "isComplete": true
+}
+
+###
+@id =1
+GET {{RestfulAPI_HostAddress}}/api/todoitems/{{id}}
+
+
+###
+
+GET {{RestfulAPI_HostAddress}}/api/todoitems/
+
+
+###
+@id = 1
+
+PUT {{RestfulAPI_HostAddress}}/api/todoitems/{{id}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Obtain Certificate",
+  "isComplete": false
+}
 
 ###
