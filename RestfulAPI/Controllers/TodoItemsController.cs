@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RestfulAPI.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using TodoApi.Models;
 
 namespace TodoApi.Controllers;
@@ -10,10 +15,58 @@ namespace TodoApi.Controllers;
 public class TodoItemsController : ControllerBase
 {
     private readonly TodoContext _context;
-
-    public TodoItemsController(TodoContext context)
+    private readonly IConfiguration _configuration;
+    public TodoItemsController(TodoContext context, IConfiguration configuration)
     {
-        _context = context;
+         _context = context;
+         _configuration = configuration;
+    }
+
+    [HttpPost("register")]
+    public IActionResult Register(UserDTO userDto)
+    {
+        if (_context.Users.Any(u => u.UserName == userDto.UserName))
+            return BadRequest("Username already exists");
+
+        var user = new User
+        {
+            UserName = userDto.UserName,
+            PasswordHash = PasswordHelper.HashPassword(userDto.Password)
+        };
+
+        _context.Users.Add(user);
+        _context.SaveChanges();
+
+        return Ok("User registered");
+    }
+
+    [HttpPost("login")]
+    public IActionResult Login(UserDTO userDto)
+    {
+        var user = _context.Users.FirstOrDefault(u => u.UserName == userDto.UserName);
+        if (user == null || !PasswordHelper.VerifyPassword(userDto.Password, user.PasswordHash))
+            return Unauthorized("Invalid credentials");
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+            new Claim(ClaimTypes.Name, user.UserName)
+            }),
+            // Set the token expiration time
+            Expires = DateTime.UtcNow.AddHours(1),
+            Issuer = _configuration["Jwt:Issuer"],
+            Audience = _configuration["Jwt:Audience"],
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        string jwt = tokenHandler.WriteToken(token);
+
+        return Ok(new { token = jwt });
     }
 
     private static TodoItemDTO ItemToDTO(TodoItem todoItem) =>
@@ -24,8 +77,13 @@ public class TodoItemsController : ControllerBase
           IsComplete = todoItem.IsComplete
       };
 
-    // GET: api/TodoItems
+  
+    [HttpGet("getdata")]
+    [Authorize]
+
+   
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<TodoItemDTO>>> GetTodoItems()
     {
         return await _context.TodoItems
