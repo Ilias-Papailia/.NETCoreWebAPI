@@ -20,8 +20,6 @@ public class TodoItemsController : ControllerBase
     {
          _context = context;
          _configuration = configuration;
-
-
     }
 
     [HttpPost("register")]
@@ -57,7 +55,8 @@ public class TodoItemsController : ControllerBase
             Subject = new ClaimsIdentity(new[]
             {
             new Claim(ClaimTypes.Name, user.UserName)
-        }),
+            }),
+            // Set the token expiration time
             Expires = DateTime.UtcNow.AddHours(1),
             Issuer = _configuration["Jwt:Issuer"],
             Audience = _configuration["Jwt:Audience"],
@@ -81,11 +80,7 @@ public class TodoItemsController : ControllerBase
   
     [HttpGet("getdata")]
     [Authorize]
-    public IActionResult GetData()
-    {
-        return Ok("Only logged-in users can access this");
-    }
-    // GET: api/TodoItems
+
    
     [HttpGet]
     [Authorize]
