@@ -78,15 +78,17 @@ public class TodoItemsController : ControllerBase
           IsComplete = todoItem.IsComplete
       };
 
-    [Authorize]
+  
     [HttpGet("getdata")]
+    [Authorize]
     public IActionResult GetData()
     {
         return Ok("Only logged-in users can access this");
     }
     // GET: api/TodoItems
-    [Authorize]
+   
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<TodoItemDTO>>> GetTodoItems()
     {
         return await _context.TodoItems
