@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddXmlSerializerFormatters(); 
 builder.Services.AddOpenApi();
 
 builder.Services.AddEndpointsApiExplorer();
